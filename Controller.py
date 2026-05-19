@@ -10,7 +10,7 @@ Database sessions are injected per-request using FastAPI's Depends() mechanism.
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from schemas import UserCreate, UserOut, CategoryCreate, CategoryOut, ProductCreate, ProductOut, OrderCreate, OrderOut
+from schemas import UserCreate, UserOut, CategoryCreate, CategoryOut, ProductCreate, ProductOut, OrderCreate, OrderOut, RoleCreate, Role
 from typing import List
 import Service
 
@@ -32,7 +32,19 @@ def get_db():
 @router.post("/users/", response_model=UserOut, summary="Create a new user")
 def create_user(data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user with username, email, and password."""
-    return Service.create_user(db, username=data.username, email=data.email, password=data.password)
+    return Service.create_user(db, username=data.username, email=data.email, password=data.password, role_id=data.role_id)
+
+
+@router.get("/users/", response_model=List[UserOut], summary="Get all users")
+def read_all_users(db: Session = Depends(get_db)):
+    """Retrieve a list of all users."""
+    return Service.get_user(db)
+
+
+@router.get("/users/{user_id}", response_model=UserOut, summary="Get user by ID")
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    """Retrieve a specific user by their ID."""
+    return Service.get_user(db, user_id=user_id)
 
 
 @router.post("/category/", response_model=CategoryOut, summary="Create a new category")
@@ -45,7 +57,7 @@ def create_category(data: CategoryCreate, db: Session = Depends(get_db)):
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
     """Add a new product to a category with price and stock quantity."""
     return Service.create_product(db, name=data.name, description=data.description,
-                                  price=data.price, category_id=data.category_id, quantity=data.quantity)
+                                  price=data.price, category_id=data.category_id, quantity=data.quantity,image=data.image)
 
 
 @router.post("/order/", response_model=OrderOut, summary="Place a new order")
@@ -69,6 +81,7 @@ def read_all_orders(db: Session = Depends(get_db)):
     return Service.get_order(db)
 
 
+
 @router.get("/products/", response_model=List[ProductOut], summary="Get all products")
 def read_products(db: Session = Depends(get_db)):
     """Retrieve a list of all available products."""
@@ -79,3 +92,24 @@ def read_products(db: Session = Depends(get_db)):
 def read_product(product_id: int, db: Session = Depends(get_db)):
     """Retrieve a specific product by its ID."""
     return Service.get_product(db, product_id=product_id)
+
+
+@router.post("/role/", response_model=Role, summary="Create a new role")
+def create_role(data: RoleCreate, db: Session = Depends(get_db)):
+    """Create a new user role."""
+    return Service.create_role(db, name=data.name)
+
+@router.get("/roles/", response_model=List[Role], summary="Get all roles")
+def read_roles(db: Session = Depends(get_db)):
+    """Retrieve a list of all user roles."""
+    return Service.get_roles(db)
+
+@router.get("/role/{role_id}", response_model=Role, summary="Get role by ID")
+def read_role(role_id: int, db: Session = Depends(get_db)):
+    """Retrieve a specific role by its ID."""
+    return Service.get_role(db, role_id=role_id)
+
+@router.get("/users/role/{role_id}", response_model=List[UserOut], summary="Get users by role ID")
+def read_users_by_role(role_id: int, db: Session = Depends(get_db)):
+    """Retrieve a list of users that belong to a specific role."""
+    return Service.get_users_by_role(db, role_id=role_id)

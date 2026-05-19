@@ -8,10 +8,10 @@ It receives a SQLAlchemy Session via dependency injection.
 """
 
 from sqlalchemy.orm import Session
-from models import User, Category, Product, Order
+from models import User, Category, Product, Order, Role
 
 
-def create_user(db: Session, username: str, email: str, password: str) -> User:
+def create_user(db: Session, username: str, email: str, password: str, role_id: int = None) -> User:
     """
     Create and persist a new user.
 
@@ -20,15 +20,38 @@ def create_user(db: Session, username: str, email: str, password: str) -> User:
         username: Unique username.
         email: User email address.
         password: Plain text password (hash before storing in production).
+        role_id: Optional role ID to assign to the user.
 
     Returns:
         The created User object with its generated ID.
     """
-    user = User(username=username, email=email, password=password)
+    user = User(username=username, email=email, password=password, Role_id=role_id)
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
+
+
+def get_user(db: Session, user_id: int = None):
+    """
+    Retrieve one or all users.
+
+    Args:
+        db: Database session.
+        user_id: If provided, returns the specific user. If None, returns all users.
+
+    Returns:
+        A single User object or a list of all User objects.
+
+    Raises:
+        ValueError: If a specific user_id is given but not found.
+    """
+    if user_id:
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is None:
+            raise ValueError("User not found")
+        return user
+    return db.query(User).all()
 
 
 def create_category(db: Session, name: str, description: str) -> Category:
@@ -50,7 +73,7 @@ def create_category(db: Session, name: str, description: str) -> Category:
     return category
 
 
-def create_product(db: Session, name: str, description: str, price: float, category_id: int, quantity: int) -> Product:
+def create_product(db: Session, name: str, description: str, price: float, category_id: int, quantity: int,image:str) -> Product:
     """
     Create and persist a new product.
 
@@ -65,7 +88,7 @@ def create_product(db: Session, name: str, description: str, price: float, categ
     Returns:
         The created Product object with its generated ID.
     """
-    product = Product(name=name, description=description, price=price, category_id=category_id, quantity=quantity)
+    product = Product(name=name, description=description, price=price, category_id=category_id, quantity=quantity,image=image)
     db.add(product)
     db.commit()
     db.refresh(product)
@@ -153,3 +176,99 @@ def get_product(db: Session, product_id: int = None):
             raise ValueError("Product not found")
         return product
     return db.query(Product).all()
+
+def create_role(db: Session, name: str) -> Role:
+    """
+    Create and persist a new role.
+
+    Args:
+        db: Database session.
+        name: Role name.
+
+    Returns:
+        The created Role object with its generated ID.
+    """
+    role = Role(name=name)
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    return role
+
+def get_role(db: Session, role_id: int = None):
+    """
+    Retrieve one or all roles.
+
+    Args:
+        db: Database session.
+        role_id: If provided, returns the specific role. If None, returns all roles.
+    Returns:
+        A single Role object or a list of all Role objects.
+    Raises:
+        ValueError: If a specific role_id is given but not found.
+    """
+    if role_id:
+        role = db.query(Role).filter(Role.id == role_id).first()
+        if role is None:
+            raise ValueError("Role not found")
+        return role
+    return db.query(Role).all()
+
+
+def get_roles(db: Session):
+    """
+    Retrieve all roles.
+
+    Args:
+        db: Database session.
+
+    Returns:
+        A list of all Role objects.
+    """
+    return get_role(db)  
+        
+def update_role(db: Session, role_id: int, name: str) -> Role:
+    """
+    Update an existing role's name.
+
+    Args:
+        db: Database session.
+        role_id: ID of the role to update.
+        name: New name for the role.
+
+    Returns:
+        The updated Role object.
+
+    Raises:
+        ValueError: If the role with the given ID is not found.
+    """
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if role is None:
+        raise ValueError("Role not found")
+    role.name = name
+    db.commit()
+    db.refresh(role)
+    return role
+
+
+def get_users_by_role(db: Session, role_id: int):
+    """
+    Retrieve all users that belong to a specific role.
+
+    Args:
+        db: Database session.
+        role_id: ID of the role to filter by.
+
+    Returns:
+        A list of User objects with the specified role_id.
+
+    Raises:
+        ValueError: If no role with the given ID exists.
+    """
+    # Verify the role exists
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if role is None:
+        raise ValueError("Role not found")
+    
+    # Get all users with this role
+    users = db.query(User).filter(User.Role_id == role_id).all()
+    return users

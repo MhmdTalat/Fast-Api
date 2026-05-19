@@ -9,6 +9,7 @@ class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
+    role_id: Optional[int] = None
 
     @field_validator("username")
     @classmethod
@@ -33,6 +34,7 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: str
+    Role_id: Optional[int] = None
 
     model_config = {"from_attributes": True}
 
@@ -127,5 +129,27 @@ class OrderOut(BaseModel):
     user_id: int
     product_id: int
     quantity: int
+
+    model_config = {"from_attributes": True}
+
+
+# ─── Role ────────────────────────────────────────────────────────────────────
+
+class RoleCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def name_valid(cls, v):
+        if len(v) < 2:
+            raise ValueError("Role name must be at least 2 characters")
+        if len(v) > 50:
+            raise ValueError("Role name must be at most 50 characters")
+        return v.strip()
+
+
+class Role(BaseModel):
+    id: int
+    name: str
 
     model_config = {"from_attributes": True}

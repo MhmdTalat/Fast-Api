@@ -1,3 +1,4 @@
 fastapi[standard]==0.113.0
 pydantic==2.8.0
 sqlalchemy==2.0.36
+email-validator==2.1.0

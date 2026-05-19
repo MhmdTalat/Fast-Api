@@ -11,6 +11,16 @@ class User(Base):
     username = Column(String(50), nullable=False)
     email = Column(String(100), nullable=False)
     password = Column(String(255), nullable=False)
+    Role_id = Column(Integer, ForeignKey('roles.id'))
+    role = relationship("Role")
+
+
+class Role(Base):
+
+    __tablename__ = 'roles'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
 
 
 class Category(Base):
